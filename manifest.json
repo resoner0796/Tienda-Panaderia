@@ -1,7 +1,7 @@
 {
   "name": "Panadería Luis",
   "short_name": "Panadería",
-  "start_url": "/index.html",
+  "start_url": ".",
   "display": "standalone",
   "background_color": "#f7f3f0",
   "theme_color": "#d4b58e",
