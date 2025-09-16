@@ -65,6 +65,12 @@
             const productList = document.getElementById('productList');
             if (!productList) return;
             productList.innerHTML = '';
+
+            if (productsToRender.length === 0) {
+                productList.innerHTML = `<p class="col-span-full text-center text-gray-500 mt-10">No hay productos disponibles en este momento.</p>`;
+                return;
+            }
+
             productsToRender.forEach(product => {
                 const productCard = `
                     <div class="bg-white rounded-2xl shadow-lg overflow-hidden transform transition-transform hover:scale-105">
@@ -218,6 +224,7 @@
                 const now = new Date();
                 const folio = `FOLIO-${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}-${now.getTime()}`;
 
+                // **CAMBIO: Se guarda el pedido con estado 'Recibido'**
                 await addDoc(collection(window.db, 'orders'), {
                     folio,
                     userId: window.userId,
@@ -225,7 +232,7 @@
                     customerEmail: window.currentUserProfile?.email || 'N/A',
                     items: orderItems,
                     total: orderTotal,
-                    status: 'Recibido',
+                    status: 'Recibido', // <--- NUEVO ESTADO INICIAL
                     timestamp: now
                 });
 
@@ -239,7 +246,7 @@
                 document.getElementById('cartModal').classList.remove('is-active');
                 
                 const successMsg = document.createElement('div');
-                successMsg.innerHTML = `<div class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50"><div class="bg-white p-8 rounded-2xl shadow-xl max-w-sm w-full text-center"><h3 class="text-3xl font-bold mb-4">¡Pedido Realizado!</h3><p class="text-gray-600 mb-6">Tu pedido ha sido procesado con éxito.</p><button onclick="this.parentNode.parentNode.remove()" class="bg-[#d4b58e] text-[#4a2a1a] font-bold py-2 px-6 rounded-full hover:bg-[#c99a6a]">Cerrar</button></div></div>`;
+                successMsg.innerHTML = `<div class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50"><div class="bg-white p-8 rounded-2xl shadow-xl max-w-sm w-full text-center"><h3 class="text-3xl font-bold mb-4">¡Pedido Realizado!</h3><p class="text-gray-600 mb-6">Tu pedido ha sido procesado con éxito. Recibirás una notificación cuando sea confirmado.</p><button onclick="this.parentNode.parentNode.remove()" class="bg-[#d4b58e] text-[#4a2a1a] font-bold py-2 px-6 rounded-full hover:bg-[#c99a6a]">Cerrar</button></div></div>`;
                 document.body.appendChild(successMsg);
             } catch (e) {
                 console.error("Error processing the order:", e);
@@ -254,7 +261,26 @@
                 const orderTotal = order.total.toFixed(2);
                 const orderDate = order.timestamp.toDate().toLocaleString('es-ES', { dateStyle: 'long', timeStyle: 'short' });
                 const orderItemsHtml = order.items.map(item => `<li class="flex justify-between items-center text-gray-600"><span>${item.name} (x${item.quantity})</span><span>$${(item.price * item.quantity).toFixed(2)}</span></li>`).join('');
-                ordersContainer.innerHTML += `<div class="bg-white p-6 rounded-xl shadow-lg mb-4"><div class="flex justify-between items-center mb-4"><h4 class="font-bold text-lg">Folio: ${order.folio}</h4><span class="text-sm text-gray-500">${orderDate}</span></div><ul class="space-y-2">${orderItemsHtml}</ul><div class="mt-4 pt-4 border-t-2 border-dashed flex justify-between font-bold text-lg"><span>Total:</span><span>$${orderTotal}</span></div></div>`;
+
+                // **CAMBIO: Muestra el estado del pedido (Recibido o Confirmado)**
+                const statusText = order.status === 'Confirmado' ? 'Confirmado' : 'Recibido';
+                const statusClass = order.status === 'Confirmado' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800';
+
+                ordersContainer.innerHTML += `
+                    <div class="bg-white p-6 rounded-xl shadow-lg mb-4">
+                        <div class="flex justify-between items-start mb-4">
+                            <div>
+                                <h4 class="font-bold text-lg">Folio: ${order.folio}</h4>
+                                <span class="text-sm text-gray-500">${orderDate}</span>
+                            </div>
+                            <span class="px-3 py-1 text-sm font-semibold rounded-full ${statusClass}">${statusText}</span>
+                        </div>
+                        <ul class="space-y-2">${orderItemsHtml}</ul>
+                        <div class="mt-4 pt-4 border-t-2 border-dashed flex justify-between font-bold text-lg">
+                            <span>Total:</span>
+                            <span>$${orderTotal}</span>
+                        </div>
+                    </div>`;
             });
         };
 
@@ -277,15 +303,16 @@
             if (unsubscribeProducts) unsubscribeProducts();
             if (unsubscribeCart) unsubscribeCart();
             if (unsubscribeUserProfile) unsubscribeUserProfile();
-
-            const productsRef = collection(window.db, 'products');
-            unsubscribeProducts = onSnapshot(productsRef, (snapshot) => {
+            
+            // **CAMBIO: La consulta ahora filtra solo productos visibles**
+            const productsQuery = query(collection(window.db, 'products'), where("isVisible", "==", true), orderBy('name'));
+            unsubscribeProducts = onSnapshot(productsQuery, (snapshot) => {
                 const productList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                window.products = productList.length > 0 ? productList : MOCK_PRODUCTS;
+                window.products = productList.length > 0 ? productList : []; // Ya no usamos MOCK_PRODUCTS
                 renderProducts(window.products);
             }, (error) => {
                 console.error("Error getting products:", error);
-                window.products = MOCK_PRODUCTS;
+                window.products = [];
                 renderProducts(window.products);
             });
 
@@ -299,12 +326,10 @@
                     renderCart();
                 });
 
-                // El onSnapshot para el perfil sigue siendo útil para actualizaciones en tiempo real (si editas en otro dispositivo)
                 const userProfileRef = doc(window.db, 'users', user.uid);
                 unsubscribeUserProfile = onSnapshot(userProfileRef, (doc) => {
                     if (doc.exists()) {
                         window.currentUserProfile = doc.data();
-                        // Actualizamos la UI por si cambia en tiempo real
                         document.getElementById('profileFullName').textContent = window.currentUserProfile.fullName;
                         document.getElementById('profileEmail').textContent = window.currentUserProfile.email;
                         document.getElementById('profilePhone').textContent = window.currentUserProfile.phone;
@@ -314,7 +339,6 @@
                 window.cart = {};
                 window.currentUserProfile = null;
                 renderCart();
-                // **CORRECCIÓN 1: Limpiar la UI del perfil al cerrar sesión**
                 document.getElementById('profileFullName').textContent = '';
                 document.getElementById('profileEmail').textContent = '';
                 document.getElementById('profilePhone').textContent = '';
@@ -346,7 +370,6 @@
                 })
                 .catch((error) => console.error("Error setting persistence:", error));
             
-            // **CORRECCIÓN 2: El botón ahora carga los datos ANTES de abrir el modal**
             accountBtn.onclick = async () => {
                 if (window.userId) {
                     try {
@@ -361,12 +384,8 @@
                         } else {
                             console.log("El documento del perfil de usuario no existe.");
                             document.getElementById('profileFullName').textContent = 'Perfil no encontrado';
-                            document.getElementById('profileEmail').textContent = '';
-                            document.getElementById('profilePhone').textContent = '';
                         }
-                        // Solo abrimos el modal DESPUÉS de tener los datos
                         document.getElementById('userProfileModal').classList.add('is-active');
-
                     } catch (error) {
                         console.error("Error al obtener el perfil del usuario:", error);
                         alert("No se pudo cargar la información de tu perfil. Intenta de nuevo.");
