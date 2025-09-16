@@ -4,6 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Panadería Luis - Tu Panadería de Confianza</title>
+
+    <meta name="theme-color" content="#d4b58e">
+    <link rel="manifest" href="manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <link rel="apple-touch-icon" href="icon-192x192.png">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Panadería Luis">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -18,8 +25,8 @@
         /* === AJUSTES DE TAMAÑO PARA LOGOS === */
         /* ¡Aquí puedes cambiar los tamaños! Modifica los valores en pixeles (px) como necesites. */
         :root {
-            --header-logo-height: 110px;   /* <-- CAMBIA ESTE VALOR para el logo principal de arriba */
-            --cart-logo-height: 100px;     /* <-- CAMBIA ESTE VALOR para el logo de adentro del carrito */
+            --header-logo-height: 70px;   /* <-- CAMBIA ESTE VALOR para el logo principal de arriba */
+            --cart-logo-height: 80px;     /* <-- CAMBIA ESTE VALOR para el logo de adentro del carrito */
         }
 
         .header-logo {
@@ -637,6 +644,19 @@
             <img id="modalImageContent" src="" alt="Vista ampliada del producto" class="max-w-[90vw] max-h-[85vh] object-contain rounded-lg">
         </div>
     </div>
-
+    
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(registration => {
+                        console.log('✅ ServiceWorker registrado con éxito:', registration.scope);
+                    })
+                    .catch(err => {
+                        console.log('❌ Falló el registro del ServiceWorker:', err);
+                    });
+            });
+        }
+    </script>
 </body>
 </html>
