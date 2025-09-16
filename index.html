@@ -169,7 +169,6 @@
                 if (cartItemDoc.exists()) {
                     await updateDoc(cartItemRef, { quantity: cartItemDoc.data().quantity + quantity });
                 } else {
-                    // **CORRECCIÓN: Se añade la imagen al carrito**
                     await setDoc(cartItemRef, { 
                         productId: product.id, 
                         name: product.name, 
@@ -329,12 +328,10 @@
                     onAuthStateChanged(window.auth, (user) => {
                         if (user) {
                             window.userId = user.uid;
-                            // **CORRECCIÓN: Cambia el texto del botón y muestra el carrito**
                             accountBtn.textContent = 'Mi Cuenta';
                             cartToggleBtn.classList.remove('hidden');
                         } else {
                             window.userId = null;
-                            // **CORRECCIÓN: Cambia el texto del botón y oculta el carrito**
                             accountBtn.textContent = 'Iniciar Sesión';
                             cartToggleBtn.classList.add('hidden');
                         }
@@ -343,7 +340,6 @@
                 })
                 .catch((error) => console.error("Error setting persistence:", error));
             
-            // **CORRECCIÓN: Un solo botón para abrir el modal de cuenta/login**
             accountBtn.onclick = () => {
                 if (window.userId) {
                     document.getElementById('userProfileModal').classList.add('is-active');
@@ -352,7 +348,6 @@
                 }
             };
 
-            // ---- Manejo de Modales ----
             document.getElementById('cartToggleBtn').onclick = () => document.getElementById('cartModal').classList.add('is-active');
             document.getElementById('cartCloseBtn').onclick = () => document.getElementById('cartModal').classList.remove('is-active');
             document.getElementById('authCloseBtn').onclick = () => document.getElementById('authModal').classList.remove('is-active');
@@ -368,7 +363,6 @@
             };
             document.getElementById('ordersCloseBtn').onclick = () => document.getElementById('ordersModal').classList.remove('is-active');
             
-            // ---- Lógica de Formularios ----
             const loginForm = document.getElementById('loginForm');
             const registerForm = document.getElementById('registerForm');
             document.getElementById('showRegisterBtn').onclick = () => {
@@ -410,12 +404,10 @@
 
             document.getElementById('logoutBtn').onclick = () => {
                 signOut(window.auth).then(() => {
-                    // **CORRECCIÓN: Cierra el modal de perfil al cerrar sesión**
                     document.getElementById('userProfileModal').classList.remove('is-active');
                 }).catch(error => console.error("Error al cerrar sesión:", error));
             };
 
-            // ---- Lógica para editar perfil ----
             document.getElementById('editProfileBtn').onclick = () => {
                 document.getElementById('viewProfileSection').classList.add('hidden');
                 document.getElementById('editProfileSection').classList.remove('hidden');
@@ -444,7 +436,6 @@
                 }
             });
 
-            // **NUEVO: Lógica para el modal de imagen grande**
             const imageModal = document.getElementById('imageModal');
             const modalImageContent = document.getElementById('modalImageContent');
             const imageCloseBtn = document.getElementById('imageCloseBtn');
@@ -470,7 +461,9 @@
 
     <header class="bg-[#d4b58e] text-[#4a2a1a] p-4 shadow-lg sticky top-0 z-50 rounded-b-3xl">
         <div class="container mx-auto flex justify-between items-center">
-            <h1 class="text-3xl font-bold">Panadería Luis</h1>
+            <a href="/">
+                <img src="Logo.jpg" alt="Logo de Panadería Luis" class="h-14">
+            </a>
             <div class="flex items-center space-x-4">
                 <button id="accountBtn" class="bg-[#c99a6a] text-white py-2 px-4 rounded-full shadow-md hover:bg-[#a9815a]">Iniciar Sesión</button>
                 <button id="cartToggleBtn" class="bg-[#c99a6a] text-white p-2 rounded-full shadow-md hover:bg-[#a9815a] relative hidden">
@@ -487,17 +480,24 @@
     </main>
 
     <div id="cartModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-end modal">
-        <div class="bg-white w-full md:w-1/3 p-6 rounded-l-3xl shadow-xl overflow-y-auto">
-            <div class="flex justify-between items-center mb-6">
-                <h3 class="text-3xl font-bold">Tu Carrito</h3>
-                <button id="cartCloseBtn" class="text-gray-500 hover:text-gray-800"><svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg></button>
-            </div>
-            <ul id="cartItems" class="space-y-4"></ul>
-            <div class="mt-8 pt-4 border-t-2 border-dashed border-gray-300">
-                <div class="flex justify-between items-center text-2xl font-bold">
-                    <span>Total:</span><span id="cartTotal">$0.00</span>
+        <div class="bg-white w-full md:w-1/3 p-6 rounded-l-3xl shadow-xl overflow-y-auto flex flex-col">
+            <div class="flex-grow">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-3xl font-bold">Tu Carrito</h3>
+                    <button id="cartCloseBtn" class="text-gray-500 hover:text-gray-800"><svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg></button>
                 </div>
-                <button id="checkoutBtn" onclick="window.checkout()" class="mt-6 w-full bg-[#d4b58e] text-[#4a2a1a] font-bold py-3 rounded-full hover:bg-[#c99a6a]">Comprar</button>
+                <ul id="cartItems" class="space-y-4"></ul>
+            </div>
+            <div class="flex-shrink-0">
+                <div class="mt-8 pt-4 border-t-2 border-dashed border-gray-300">
+                    <div class="flex justify-between items-center text-2xl font-bold">
+                        <span>Total:</span><span id="cartTotal">$0.00</span>
+                    </div>
+                    <button id="checkoutBtn" onclick="window.checkout()" class="mt-6 w-full bg-[#d4b58e] text-[#4a2a1a] font-bold py-3 rounded-full hover:bg-[#c99a6a]">Comprar</button>
+                </div>
+                 <div class="mt-8 flex justify-center">
+                    <img src="Logo.jpg" alt="Logo de Panadería Luis" class="h-16 opacity-80">
+                </div>
             </div>
         </div>
     </div>
