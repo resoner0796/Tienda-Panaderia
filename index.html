@@ -79,10 +79,6 @@
           appId: "1:200423925424:web:84148451383055c930fd75"
         };
         
-        const MOCK_PRODUCTS = [
-            { id: "1", name: "Pan de Masa Madre", price: 5.50, description: "Corteza crujiente y miga aireada.", image: "https://placehold.co/400x300/f0e6da/331a0e?text=Pan+de+Masa+Madre" },
-        ];
-
         function renderProducts(productsToRender) {
             const productList = document.getElementById('productList');
             if (!productList) return;
@@ -97,9 +93,9 @@
                 const productCard = `
                     <div class="bg-white rounded-2xl shadow-lg overflow-hidden transform transition-transform hover:scale-105">
                         <img src="${product.image}" alt="${product.name}" class="w-full h-48 object-cover cursor-pointer product-image">
-                        <div class="p-6">
+                        <div class="p-6 flex flex-col h-full">
                             <h3 class="text-2xl font-bold mb-2">${product.name}</h3>
-                            <p class="text-gray-600 mb-4">${product.description}</p>
+                            <p class="text-gray-600 mb-4 flex-grow">${product.description}</p>
                             <div class="flex flex-col sm:flex-row justify-between items-center mt-auto space-y-4 sm:space-y-0">
                                 <span class="text-2xl font-bold text-[#4a2a1a]">$${product.price.toFixed(2)}</span>
                                 <div class="flex items-center space-x-2">
@@ -130,26 +126,29 @@
 
         function renderCart() {
             const cartItemsContainer = document.getElementById('cartItems');
-            const cartTotalElement = document.getElementById('cartTotal');
+            const cartSummary = document.getElementById('cartSummary');
             const cartCountElement = document.getElementById('cartCount');
             const checkoutBtn = document.getElementById('checkoutBtn');
-            if (!cartItemsContainer || !cartTotalElement || !cartCountElement) return;
+            const deliveryMethodSelect = document.getElementById('deliveryMethod');
+            const deliveryForm = document.getElementById('deliveryForm');
+
+            if (!cartItemsContainer || !cartSummary || !cartCountElement) return;
 
             cartItemsContainer.innerHTML = '';
-            let total = 0;
+            let subtotal = 0;
             let totalItems = 0;
 
-            if (Object.keys(window.cart).length === 0) {
-                cartItemsContainer.innerHTML = `<p class="text-center text-gray-500 mt-10">El carrito está vacío.</p>`;
+            const isCartEmpty = Object.keys(window.cart).length === 0;
+            document.getElementById('deliverySection').style.display = isCartEmpty ? 'none' : 'block';
+            
+            if (isCartEmpty) {
+                cartItemsContainer.innerHTML = `<p class="text-center text-gray-500 my-10">El carrito está vacío.</p>`;
                 checkoutBtn.disabled = true;
                 checkoutBtn.classList.add('opacity-50', 'cursor-not-allowed');
             } else {
-                checkoutBtn.disabled = false;
-                checkoutBtn.classList.remove('opacity-50', 'cursor-not-allowed');
                 for (const itemId in window.cart) {
                     const item = window.cart[itemId];
-                    const itemTotal = item.price * item.quantity;
-                    total += itemTotal;
+                    subtotal += item.price * item.quantity;
                     totalItems += item.quantity;
                     const cartItemHTML = `
                         <li class="flex justify-between items-center p-4 bg-gray-100 rounded-xl shadow-sm">
@@ -171,7 +170,36 @@
                     cartItemsContainer.innerHTML += cartItemHTML;
                 }
             }
-            cartTotalElement.textContent = `$${total.toFixed(2)}`;
+
+            const deliveryCost = deliveryMethodSelect.value === 'delivery' ? 20 : 0;
+            const finalTotal = subtotal + deliveryCost;
+
+            cartSummary.innerHTML = `
+                <div class="flex justify-between items-center text-lg text-gray-600">
+                    <span>Subtotal:</span>
+                    <span id="cartSubtotal">$${subtotal.toFixed(2)}</span>
+                </div>
+                <div class="flex justify-between items-center text-lg text-gray-600">
+                    <span>Envío:</span>
+                    <span id="cartShipping">$${deliveryCost.toFixed(2)}</span>
+                </div>
+                <div class="flex justify-between items-center text-2xl font-bold mt-2 pt-2 border-t">
+                    <span>Total:</span>
+                    <span id="cartTotal">$${finalTotal.toFixed(2)}</span>
+                </div>
+            `;
+            
+            const isDelivery = deliveryMethodSelect.value === 'delivery';
+            const isFormValid = deliveryForm.checkValidity();
+
+            if (isCartEmpty || (isDelivery && !isFormValid)) {
+                checkoutBtn.disabled = true;
+                checkoutBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            } else {
+                checkoutBtn.disabled = false;
+                checkoutBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            }
+
             if (totalItems > 0) {
                 cartCountElement.textContent = totalItems;
                 cartCountElement.classList.remove('hidden');
@@ -240,19 +268,53 @@
 
         window.checkout = async () => {
             if (!window.userId || Object.keys(window.cart).length === 0) return;
-            try {
-                const orderItems = Object.values(window.cart).map(item => ({ productId: item.productId, name: item.name, price: item.price, quantity: item.quantity }));
-                const orderTotal = orderItems.reduce((total, item) => total + (item.price * item.quantity), 0);
-                const now = new Date();
-                const folio = `FOLIO-${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}-${now.getTime()}`;
 
+            const deliveryMethod = document.getElementById('deliveryMethod').value;
+            let deliveryData = {};
+            let subtotal = 0;
+            const orderItems = Object.values(window.cart).map(item => {
+                subtotal += item.price * item.quantity;
+                return { productId: item.productId, name: item.name, price: item.price, quantity: item.quantity };
+            });
+
+            if (deliveryMethod === 'delivery') {
+                const deliveryForm = document.getElementById('deliveryForm');
+                if (!deliveryForm.checkValidity()) {
+                    alert('Por favor, completa todos los campos de la dirección.');
+                    return;
+                }
+                deliveryData = {
+                    method: 'Envío a domicilio',
+                    cost: 20,
+                    address: {
+                        street: document.getElementById('street').value,
+                        number: document.getElementById('number').value,
+                        neighborhood: document.getElementById('neighborhood').value,
+                        reference: document.getElementById('reference').value
+                    }
+                };
+            } else {
+                deliveryData = {
+                    method: 'Recoger en tienda',
+                    cost: 0,
+                    address: 'Flor de Salvia #129, Fraccionamiento San Valentín'
+                };
+            }
+            
+            const finalTotal = subtotal + deliveryData.cost;
+            const now = new Date();
+            const folio = `FOLIO-${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}-${now.getTime()}`;
+
+            try {
                 await addDoc(collection(window.db, 'orders'), {
                     folio,
                     userId: window.userId,
                     customerName: window.currentUserProfile?.fullName || 'N/A',
                     customerEmail: window.currentUserProfile?.email || 'N/A',
                     items: orderItems,
-                    total: orderTotal,
+                    subtotal: subtotal,
+                    total: finalTotal,
+                    delivery: deliveryData,
                     status: 'Recibido',
                     timestamp: now
                 });
@@ -282,7 +344,7 @@
                 const orderTotal = order.total.toFixed(2);
                 const orderDate = order.timestamp.toDate().toLocaleString('es-ES', { dateStyle: 'long', timeStyle: 'short' });
                 const orderItemsHtml = order.items.map(item => `<li class="flex justify-between items-center text-gray-600"><span>${item.name} (x${item.quantity})</span><span>$${(item.price * item.quantity).toFixed(2)}</span></li>`).join('');
-
+                
                 const statusText = order.status === 'Confirmado' ? 'Confirmado' : 'Recibido';
                 const statusClass = order.status === 'Confirmado' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800';
 
@@ -394,25 +456,43 @@
                     try {
                         const userProfileRef = doc(window.db, 'users', window.userId);
                         const docSnap = await getDoc(userProfileRef);
-
                         if (docSnap.exists()) {
                             const profileData = docSnap.data();
                             document.getElementById('profileFullName').textContent = profileData.fullName;
                             document.getElementById('profileEmail').textContent = profileData.email;
                             document.getElementById('profilePhone').textContent = profileData.phone;
                         } else {
-                            console.log("El documento del perfil de usuario no existe.");
                             document.getElementById('profileFullName').textContent = 'Perfil no encontrado';
                         }
                         document.getElementById('userProfileModal').classList.add('is-active');
                     } catch (error) {
                         console.error("Error al obtener el perfil del usuario:", error);
-                        alert("No se pudo cargar la información de tu perfil. Intenta de nuevo.");
                     }
                 } else {
                     document.getElementById('authModal').classList.add('is-active');
                 }
             };
+            
+            const deliveryMethodSelect = document.getElementById('deliveryMethod');
+            const deliveryDetails = document.getElementById('deliveryDetails');
+            const pickupLocation = document.getElementById('pickupLocation');
+            const deliveryForm = document.getElementById('deliveryForm');
+            
+            const handleDeliveryChange = () => {
+                const selected = deliveryMethodSelect.value;
+                if (selected === 'pickup') {
+                    pickupLocation.classList.remove('hidden');
+                    deliveryForm.classList.add('hidden');
+                } else {
+                    pickupLocation.classList.add('hidden');
+                    deliveryForm.classList.remove('hidden');
+                }
+                renderCart();
+            };
+            
+            deliveryMethodSelect.addEventListener('change', handleDeliveryChange);
+            deliveryForm.addEventListener('input', () => renderCart()); // Re-render to check form validity for checkout button
+            handleDeliveryChange(); // Initial setup
 
             document.getElementById('cartToggleBtn').onclick = () => document.getElementById('cartModal').classList.add('is-active');
             document.getElementById('cartCloseBtn').onclick = () => document.getElementById('cartModal').classList.remove('is-active');
@@ -553,15 +633,35 @@
                     <button id="cartCloseBtn" class="text-gray-500 hover:text-gray-800"><svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg></button>
                 </div>
                 <ul id="cartItems" class="space-y-4"></ul>
+                
+                <div id="deliverySection" class="mt-8 pt-4 border-t" style="display: none;">
+                    <h4 class="text-xl font-bold mb-4">Forma de entrega</h4>
+                    <select id="deliveryMethod" class="w-full p-3 rounded-lg border-2 bg-gray-50 mb-4">
+                        <option value="pickup" selected>Recoger en tienda (Sin costo)</option>
+                        <option value="delivery">Envío a domicilio ($20.00)</option>
+                    </select>
+                    <div id="deliveryDetails">
+                        <div id="pickupLocation" class="bg-blue-50 p-4 rounded-lg text-blue-800">
+                            <p class="font-semibold">Dirección de la tienda:</p>
+                            <p>Flor de Salvia #129, Fraccionamiento San Valentín.</p>
+                        </div>
+                        <form id="deliveryForm" class="hidden space-y-4">
+                            <input type="text" id="street" placeholder="Calle" class="w-full p-3 rounded-lg border-2" required>
+                            <div class="grid grid-cols-2 gap-4">
+                                <input type="text" id="number" placeholder="Número" class="w-full p-3 rounded-lg border-2" required>
+                                <input type="text" id="neighborhood" placeholder="Colonia" class="w-full p-3 rounded-lg border-2" required>
+                            </div>
+                            <input type="text" id="reference" placeholder="Referencia (ej. casa color azul)" class="w-full p-3 rounded-lg border-2" required>
+                        </form>
+                    </div>
+                </div>
+
             </div>
             <div class="flex-shrink-0">
-                <div class="mt-8 pt-4 border-t-2 border-dashed border-gray-300">
-                    <div class="flex justify-between items-center text-2xl font-bold">
-                        <span>Total:</span><span id="cartTotal">$0.00</span>
+                <div id="cartSummary" class="mt-8 pt-4 border-t-2 border-dashed border-gray-300 space-y-2">
                     </div>
-                    <button id="checkoutBtn" onclick="window.checkout()" class="mt-6 w-full bg-[#d4b58e] text-[#4a2a1a] font-bold py-3 rounded-full hover:bg-[#c99a6a]">Comprar</button>
-                </div>
-                 <div class="mt-8 flex justify-center">
+                <button id="checkoutBtn" onclick="window.checkout()" class="mt-6 w-full bg-[#d4b58e] text-[#4a2a1a] font-bold py-3 rounded-full hover:bg-[#c99a6a]">Comprar</button>
+                <div class="mt-8 flex justify-center">
                     <img src="Logo.PNG" alt="Logo de Panadería Luis" class="cart-footer-logo opacity-80">
                 </div>
             </div>
