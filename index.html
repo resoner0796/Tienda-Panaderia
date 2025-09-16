@@ -14,6 +14,24 @@
             background-color: #f7f3f0;
             color: #4a2a1a;
         }
+        
+        /* === AJUSTES DE TAMAÑO PARA LOGO Y CARRITO === */
+        /* ¡Aquí puedes cambiar los tamaños! Modifica los valores en pixeles (px) como necesites. */
+        :root {
+            --logo-height: 80px;      /* <-- CAMBIA ESTE VALOR para el alto del logo */
+            --cart-icon-size: 32px;   /* <-- CAMBIA ESTE VALOR para el tamaño del ícono del carrito */
+        }
+
+        .header-logo {
+            height: var(--logo-height);
+        }
+
+        .cart-icon {
+            height: var(--cart-icon-size);
+            width: var(--cart-icon-size);
+        }
+        /* =============================================== */
+
         .modal {
             transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out;
             transform: translateX(100%);
@@ -509,12 +527,12 @@
     <header class="bg-[#d4b58e] text-[#4a2a1a] p-4 shadow-lg sticky top-0 z-50 rounded-b-3xl">
         <div class="container mx-auto flex justify-between items-center">
             <a href="/">
-                <img src="Logo.PNG" alt="Logo de Panadería Luis" class="h-14">
+                <img src="Logo.PNG" alt="Logo de Panadería Luis" class="header-logo">
             </a>
             <div class="flex items-center space-x-4">
                 <button id="accountBtn" class="bg-[#c99a6a] text-white py-2 px-4 rounded-full shadow-md hover:bg-[#a9815a]">Iniciar Sesión</button>
                 <button id="cartToggleBtn" class="bg-[#c99a6a] text-white p-2 rounded-full shadow-md hover:bg-[#a9815a] relative hidden">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" /></svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="cart-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" /></svg>
                     <span id="cartCount" class="absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-red-100 transform translate-x-1/2 -translate-y-1/2 bg-red-600 rounded-full hidden"></span>
                 </button>
             </div>
