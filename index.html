@@ -79,6 +79,7 @@
           appId: "1:200423925424:web:84148451383055c930fd75"
         };
         
+        // ** CAMBIO: Restaurada la función renderProducts a su estado original funcional **
         function renderProducts(productsToRender) {
             const productList = document.getElementById('productList');
             if (!productList) return;
@@ -93,9 +94,9 @@
                 const productCard = `
                     <div class="bg-white rounded-2xl shadow-lg overflow-hidden transform transition-transform hover:scale-105">
                         <img src="${product.image}" alt="${product.name}" class="w-full h-48 object-cover cursor-pointer product-image">
-                        <div class="p-6 flex flex-col h-full">
+                        <div class="p-6">
                             <h3 class="text-2xl font-bold mb-2">${product.name}</h3>
-                            <p class="text-gray-600 mb-4 flex-grow">${product.description}</p>
+                            <p class="text-gray-600 mb-4">${product.description}</p>
                             <div class="flex flex-col sm:flex-row justify-between items-center mt-auto space-y-4 sm:space-y-0">
                                 <span class="text-2xl font-bold text-[#4a2a1a]">$${product.price.toFixed(2)}</span>
                                 <div class="flex items-center space-x-2">
@@ -143,8 +144,6 @@
             
             if (isCartEmpty) {
                 cartItemsContainer.innerHTML = `<p class="text-center text-gray-500 my-10">El carrito está vacío.</p>`;
-                checkoutBtn.disabled = true;
-                checkoutBtn.classList.add('opacity-50', 'cursor-not-allowed');
             } else {
                 for (const itemId in window.cart) {
                     const item = window.cart[itemId];
@@ -491,8 +490,8 @@
             };
             
             deliveryMethodSelect.addEventListener('change', handleDeliveryChange);
-            deliveryForm.addEventListener('input', () => renderCart()); // Re-render to check form validity for checkout button
-            handleDeliveryChange(); // Initial setup
+            deliveryForm.addEventListener('input', () => renderCart());
+            handleDeliveryChange();
 
             document.getElementById('cartToggleBtn').onclick = () => document.getElementById('cartModal').classList.add('is-active');
             document.getElementById('cartCloseBtn').onclick = () => document.getElementById('cartModal').classList.remove('is-active');
