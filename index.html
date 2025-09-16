@@ -11,6 +11,7 @@
     <link rel="apple-touch-icon" href="icon-192x192.png">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Panadería Luis">
+    
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -22,11 +23,9 @@
             color: #4a2a1a;
         }
         
-        /* === AJUSTES DE TAMAÑO PARA LOGOS === */
-        /* ¡Aquí puedes cambiar los tamaños! Modifica los valores en pixeles (px) como necesites. */
         :root {
-            --header-logo-height: 70px;   /* <-- CAMBIA ESTE VALOR para el logo principal de arriba */
-            --cart-logo-height: 80px;     /* <-- CAMBIA ESTE VALOR para el logo de adentro del carrito */
+            --header-logo-height: 70px;
+            --cart-logo-height: 80px;
         }
 
         .header-logo {
@@ -36,7 +35,6 @@
         .cart-footer-logo {
             height: var(--cart-logo-height);
         }
-        /* ===================================== */
 
         .modal {
             transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out;
@@ -248,7 +246,6 @@
                 const now = new Date();
                 const folio = `FOLIO-${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}-${now.getTime()}`;
 
-                // **CAMBIO: Se guarda el pedido con estado 'Recibido'**
                 await addDoc(collection(window.db, 'orders'), {
                     folio,
                     userId: window.userId,
@@ -256,7 +253,7 @@
                     customerEmail: window.currentUserProfile?.email || 'N/A',
                     items: orderItems,
                     total: orderTotal,
-                    status: 'Recibido', // <--- NUEVO ESTADO INICIAL
+                    status: 'Recibido',
                     timestamp: now
                 });
 
@@ -286,7 +283,6 @@
                 const orderDate = order.timestamp.toDate().toLocaleString('es-ES', { dateStyle: 'long', timeStyle: 'short' });
                 const orderItemsHtml = order.items.map(item => `<li class="flex justify-between items-center text-gray-600"><span>${item.name} (x${item.quantity})</span><span>$${(item.price * item.quantity).toFixed(2)}</span></li>`).join('');
 
-                // **CAMBIO: Muestra el estado del pedido (Recibido o Confirmado)**
                 const statusText = order.status === 'Confirmado' ? 'Confirmado' : 'Recibido';
                 const statusClass = order.status === 'Confirmado' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800';
 
@@ -328,11 +324,10 @@
             if (unsubscribeCart) unsubscribeCart();
             if (unsubscribeUserProfile) unsubscribeUserProfile();
             
-            // **CAMBIO: La consulta ahora filtra solo productos visibles**
             const productsQuery = query(collection(window.db, 'products'), where("isVisible", "==", true), orderBy('name'));
             unsubscribeProducts = onSnapshot(productsQuery, (snapshot) => {
                 const productList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                window.products = productList.length > 0 ? productList : []; // Ya no usamos MOCK_PRODUCTS
+                window.products = productList.length > 0 ? productList : [];
                 renderProducts(window.products);
             }, (error) => {
                 console.error("Error getting products:", error);
@@ -648,7 +643,7 @@
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/sw.js')
+                navigator.serviceWorker.register('sw.js')
                     .then(registration => {
                         console.log('✅ ServiceWorker registrado con éxito:', registration.scope);
                     })
