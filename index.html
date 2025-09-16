@@ -299,10 +299,12 @@
                     renderCart();
                 });
 
+                // El onSnapshot para el perfil sigue siendo útil para actualizaciones en tiempo real (si editas en otro dispositivo)
                 const userProfileRef = doc(window.db, 'users', user.uid);
                 unsubscribeUserProfile = onSnapshot(userProfileRef, (doc) => {
                     if (doc.exists()) {
                         window.currentUserProfile = doc.data();
+                        // Actualizamos la UI por si cambia en tiempo real
                         document.getElementById('profileFullName').textContent = window.currentUserProfile.fullName;
                         document.getElementById('profileEmail').textContent = window.currentUserProfile.email;
                         document.getElementById('profilePhone').textContent = window.currentUserProfile.phone;
@@ -312,6 +314,10 @@
                 window.cart = {};
                 window.currentUserProfile = null;
                 renderCart();
+                // **CORRECCIÓN 1: Limpiar la UI del perfil al cerrar sesión**
+                document.getElementById('profileFullName').textContent = '';
+                document.getElementById('profileEmail').textContent = '';
+                document.getElementById('profilePhone').textContent = '';
             }
         }
         
@@ -340,9 +346,31 @@
                 })
                 .catch((error) => console.error("Error setting persistence:", error));
             
-            accountBtn.onclick = () => {
+            // **CORRECCIÓN 2: El botón ahora carga los datos ANTES de abrir el modal**
+            accountBtn.onclick = async () => {
                 if (window.userId) {
-                    document.getElementById('userProfileModal').classList.add('is-active');
+                    try {
+                        const userProfileRef = doc(window.db, 'users', window.userId);
+                        const docSnap = await getDoc(userProfileRef);
+
+                        if (docSnap.exists()) {
+                            const profileData = docSnap.data();
+                            document.getElementById('profileFullName').textContent = profileData.fullName;
+                            document.getElementById('profileEmail').textContent = profileData.email;
+                            document.getElementById('profilePhone').textContent = profileData.phone;
+                        } else {
+                            console.log("El documento del perfil de usuario no existe.");
+                            document.getElementById('profileFullName').textContent = 'Perfil no encontrado';
+                            document.getElementById('profileEmail').textContent = '';
+                            document.getElementById('profilePhone').textContent = '';
+                        }
+                        // Solo abrimos el modal DESPUÉS de tener los datos
+                        document.getElementById('userProfileModal').classList.add('is-active');
+
+                    } catch (error) {
+                        console.error("Error al obtener el perfil del usuario:", error);
+                        alert("No se pudo cargar la información de tu perfil. Intenta de nuevo.");
+                    }
                 } else {
                     document.getElementById('authModal').classList.add('is-active');
                 }
