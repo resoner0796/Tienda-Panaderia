@@ -1,16 +1,14 @@
 const CACHE_NAME = 'panaderia-luis-cache-v1';
+// CAMBIO: Se quitaron las diagonales iniciales para usar rutas relativas
 const urlsToCache = [
-  '/',
-  '/index.html',
-  '/Logo.PNG',
-  '/icon-192x192.png',
-  '/icon-512x512.png',
-  '/maskable-icon.png'
-  // No añadimos los scripts de Firebase/Tailwind porque se sirven desde una CDN
-  // y es mejor que el navegador los maneje.
+  './',
+  './index.html',
+  './Logo.PNG',
+  './icon-192x192.png',
+  './icon-512x512.png',
+  './maskable-icon.png'
 ];
 
-// Evento de instalación: se abre el caché y se guardan los archivos principales
 self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME)
@@ -21,7 +19,6 @@ self.addEventListener('install', event => {
   );
 });
 
-// Evento de activación: limpia cachés antiguos si los hay
 self.addEventListener('activate', event => {
   const cacheWhitelist = [CACHE_NAME];
   event.waitUntil(
@@ -37,16 +34,13 @@ self.addEventListener('activate', event => {
   );
 });
 
-// Evento fetch: intercepta las peticiones y sirve desde el caché si es posible
 self.addEventListener('fetch', event => {
   event.respondWith(
     caches.match(event.request)
       .then(response => {
-        // Si encontramos una respuesta en el caché, la devolvemos
         if (response) {
           return response;
         }
-        // Si no, hacemos la petición a la red
         return fetch(event.request);
       }
     )
