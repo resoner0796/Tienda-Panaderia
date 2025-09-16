@@ -36,22 +36,38 @@
             height: var(--cart-logo-height);
         }
 
-        /* === CAMBIOS PARA PANELES LATERALES === */
+        /* === CAMBIO: Estilos corregidos para los paneles laterales === */
         .side-panel {
-            transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out;
+            transition: opacity 0.3s ease-in-out;
             opacity: 0;
+            pointer-events: none; /* Hace que la capa invisible no bloquee los clics */
         }
         .side-panel.is-active {
-            transform: translateX(0);
             opacity: 1;
+            pointer-events: auto; /* Permite interactuar con el panel cuando está activo */
         }
-        #cartModal {
+
+        /* Contenedor interno del panel (el que se desliza) */
+        .side-panel > div {
+            transition: transform 0.3s ease-in-out;
+        }
+
+        /* Paneles que vienen de la derecha */
+        #cartModal > div, #ordersModal > div {
             transform: translateX(100%);
         }
-        #userProfileModal {
+        #cartModal.is-active > div, #ordersModal.is-active > div {
+            transform: translateX(0);
+        }
+
+        /* Panel que viene de la izquierda */
+        #userProfileModal > div {
             transform: translateX(-100%);
         }
-        /* ===================================== */
+        #userProfileModal.is-active > div {
+            transform: translateX(0);
+        }
+        /* ========================================================== */
 
         .form-modal {
             transition: opacity 0.5s ease-in-out;
@@ -457,7 +473,7 @@
                 })
                 .catch((error) => console.error("Error setting persistence:", error));
             
-            accountBtn.onclick = async () => {
+            accountBtn.onclick = () => {
                 if (window.userId) {
                     document.getElementById('userProfileModal').classList.add('is-active');
                 } else {
