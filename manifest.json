@@ -1,0 +1,27 @@
+{
+  "name": "Panadería Luis",
+  "short_name": "Panadería",
+  "start_url": "/index.html",
+  "display": "standalone",
+  "background_color": "#f7f3f0",
+  "theme_color": "#d4b58e",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "icon-192x192.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "icon-512x512.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    },
+    {
+      "src": "maskable-icon.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "maskable"
+    }
+  ]
+}
